@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Dịch vụ Database (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_DATABASE: demo_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    # Thêm healthcheck để báo hiệu khi nào MySQL THỰC SỰ sẵn sàng nhận kết nối
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Dịch vụ Spring Boot App của Đức
+  app:
+    build: .
+    container_name: spring-app-duc
+    restart: always  # <-- THÊM DÒNG NÀY ĐỂ TỰ ĐỘNG RESTART NẾU APP CHẾT
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy # <-- ĐỢI DB THỰC SỰ SẴN SÀNG RỒI MỚI CHẠY APP
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/demo_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
