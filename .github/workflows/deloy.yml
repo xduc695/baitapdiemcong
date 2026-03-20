@@ -42,5 +42,5 @@ jobs:
           push: true
           # format: <tên_user_dockerhub>/<tên_repo_dockerhub>
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/YOUR_DOCKERHUB_REPO_NAME:latest
-            ${{ secrets.DOCKER_USERNAME }}/YOUR_DOCKERHUB_REPO_NAME:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/java-api-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/java-api-app:${{ github.sha }}
