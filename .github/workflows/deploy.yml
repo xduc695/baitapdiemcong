@@ -22,20 +22,21 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # 3. Đăng nhập vào Docker Hub
-      - name: Login to Docker Hub
-        # Sử dụng GitHub Secrets (Bạn phải tạo 2 Secret này trong Settings repo)
+      # 3. Đăng nhập vào Github Container Registry (GHCR) để lách luật khóa tải của Docker Hub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Github tự cấp sẵn 100%, bạn KHÔNG cần tạo secret bằng tay
 
-      # 4. Build và Push Docker Image
+      # 4. Build và Push Docker Image lên Github
       - name: Build and Push Docker image
         run: |
-          # Thẻ (tag) image lấy cứng là xuanduc2004/java-api-app:latest
-          docker build -t xuanduc2004/java-api-app:latest .
-          docker push xuanduc2004/java-api-app:latest
+          GITHUB_REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$GITHUB_REPO_LOWER:latest"
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
 
       # 5. Profile & Deploy to DevOps Classroom
       - name: Profile & Deploy to DevOps Classroom
@@ -45,24 +46,19 @@ jobs:
           GREEN='\033[0;32m'
           YELLOW='\033[1;33m'
           BLUE='\033[0;34m'
-          NC='\033[0m' # No Color
+          NC='\033[0m'
 
-          # 1. In Banner Profile cá nhân chuyên nghiệp
+          # 1. In Banner Profile
           echo -e "${CYAN}======================================================${NC}"
           echo -e "${YELLOW}          BACKEND DEVELOPER - DEPLOYMENT PIPELINE      ${NC}"
           echo -e "${CYAN}======================================================${NC}"
           echo -e "${GREEN}  FullName :${NC} NGUYEN XUAN DUC"
-          echo -e "${GREEN}  Major     :${NC} Software Engineering @ HUTECH"
-          echo -e "${GREEN}  Role      :${NC} Backend Developer & Tester"
-          echo -e "${GREEN}  Tech Stack:${NC} Java, Spring Boot, .NET Core, Docker"
-          echo -e "${GREEN}  Project   :${NC} Java API Application"
+          echo -e "${GREEN}  Project   :${NC} Java API Application (GHCR Bypass)"
           echo -e "${CYAN}------------------------------------------------------${NC}"
-          echo -e "${BLUE}  Starting deployment process at: $(date)${NC}"
-          echo -e "${CYAN}======================================================${NC}"
-          echo ""
 
-          # 2. Thực hiện cấu hình biến
-          REPO="xuanduc2004/java-api-app"
+          # 2. Cấu hình biến ép máy chủ Pull từ Github thay vì Docker Hub
+          GITHUB_REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          REPO="ghcr.io/$GITHUB_REPO_LOWER"
           CONTAINER_PORT=8080 # Đã cập nhật theo Spring Boot của bạn
           SLOT=8
 
