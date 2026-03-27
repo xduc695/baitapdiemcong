@@ -1,8 +1,8 @@
-name: CI/CD Deploy
+name: CI/CD Deploy Professional
 
 on:
   push:
-    branches: [ "main" ] # Hoặc branch bạn đang dùng
+    branches: [ "main" ]
 
 jobs:
   deploy:
@@ -11,30 +11,62 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # (Nếu bạn chưa build Docker image thì cần thêm bước Build & Push ở đây)
-
-      - name: Triển khai lên DevOps Classroom
+      - name: Profile & Deploy to DevOps Classroom
         run: |
+          # Định nghĩa màu sắc
+          CYAN='\033[0;36m'
+          GREEN='\033[0;32m'
+          YELLOW='\033[1;33m'
+          BLUE='\033[0;34m'
+          NC='\033[0m' # No Color
+
+          # 1. In Banner Profile cá nhân chuyên nghiệp
+          echo -e "${CYAN}======================================================${NC}"
+          echo -e "${YELLOW}          BACKEND DEVELOPER - DEPLOYMENT PIPELINE      ${NC}"
+          echo -e "${CYAN}======================================================${NC}"
+          echo -e "${GREEN}  FullName :${NC} NGUYEN XUAN DUC"
+          echo -e "${GREEN}  Major     :${NC} Software Engineering @ HUTECH"
+          echo -e "${GREEN}  Role      :${NC} Backend Developer & Tester"
+          echo -e "${GREEN}  Tech Stack:${NC} Java, Spring Boot, .NET Core, Docker"
+          echo -e "${GREEN}  Project   :${NC} Java API Application"
+          echo -e "${CYAN}------------------------------------------------------${NC}"
+          echo -e "${BLUE}  Starting deployment process at: $(date)${NC}"
+          echo -e "${CYAN}======================================================${NC}"
+          echo ""
+
+          # 2. Thực hiện cấu hình biến
           REPO="xuanduc2004/java-api-app"
-          CONTAINER_PORT=80
-          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=8&container_port=$CONTAINER_PORT&strict_container_port=0")
-          BODY=$(echo "$RESPONSE" | sed "$d")
+          CONTAINER_PORT=8080 # Đã cập nhật theo Spring Boot của bạn
+          SLOT=8
+
+          echo -e "${YELLOW}[INFO]${NC} Deploying image: ${BLUE}$REPO:latest${NC} to ${BLUE}Slot $SLOT${NC}..."
+
+          # 3. Gọi Webhook Deploy
+          RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=$SLOT&container_port=$CONTAINER_PORT&strict_container_port=0")
+          BODY=$(echo "$RESPONSE" | sed '$d')
           CODE=$(echo "$RESPONSE" | tail -n1)
-          echo "Webhook HTTP: $CODE"
+
+          echo -e "${YELLOW}[INFO]${NC} Webhook returned HTTP Status: ${CYAN}$CODE${NC}"
+
+          # 4. Xử lý logic kết quả
           if [ "$CODE" -eq 524 ]; then
-            echo "Cảnh báo: Server webhook quá tải (524 Timeout). Quá trình deploy có thể vẫn đang tiếp tục ngầm bên trong server."
+            echo -e "${YELLOW}⚠️  WARNING:${NC} Server Cloudflare Timeout (524)."
+            echo -e "Quá trình Pull Image vẫn đang diễn ra ngầm trên Server."
             echo "::group::Chi tiết webhook JSON"
             echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
             echo "::endgroup::"
+            echo -e "${GREEN}>>> Vui lòng kiểm tra Dashboard DevOps Classroom sau vài phút!${NC}"
             exit 0
           elif [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
-            echo "Deploy thất bại. Xem chi tiết trong nhóm log bên dưới."
-            echo "::group::Chi tiết webhook JSON"
+            echo -e "${RED}❌ DEPLOY FAILED!${NC}"
+            echo "::group::Xem chi tiết lỗi JSON"
             echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
             echo "::endgroup::"
             exit 1
           fi
-          echo "Deploy thành công."
-          echo "::group::Chi tiết webhook JSON"
+
+          echo -e "${GREEN}✅ DEPLOY SUCCESSFUL!${NC}"
+          echo -e "${CYAN}======================================================${NC}"
+          echo "::group::Chi tiết phản hồi từ Server"
           echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
           echo "::endgroup::"
