@@ -1,5 +1,5 @@
-# B1: Dùng JDK 21 trên nền Alpine cho nhẹ (phù hợp Ubuntu)
-FROM eclipse-temurin:21-jdk-alpine
+# B1: Dùng JRE 21 trên nền Alpine cho nhẹ (chỉ có môi trường chạy, không có công cụ build)
+FROM eclipse-temurin:21-jre-alpine
 
 # B2: Tạo thư mục app
 WORKDIR /app
